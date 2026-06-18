@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrivaDistill Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-panel slide-down">
+            <div class="brand">
+                <div class="logo-shield">🔒</div>
+                <div class="brand-text">
+                    <h1>PrivaDistill</h1>
+                    <span class="version">v2.0.0-edge</span>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <div id="status-pulse" class="pulse-dot offline"></div>
+                <span id="status-text">System Offline</span>
+            </div>
+        </header>
+
+        <main class="dashboard-grid fade-in">
+            
+            <aside class="control-panel">
+                <div class="glass-card stagger-1">
+                    <h2>Pipeline Orchestration</h2>
+                    <div class="button-group vertical">
+                        <button id="btn-train" class="btn primary glow" data-action="/train">
+                            <span class="btn-icon">⚡</span> 1. DP Distillation
+                        </button>
+                        <button id="btn-export" class="btn secondary" data-action="/export">
+                            <span class="btn-icon">📦</span> 2. Export ONNX
+                        </button>
+                        <button id="btn-quantize" class="btn secondary outline" data-action="/quantize">
+                            <span class="btn-icon">🗜️</span> 3. Quantize (4-bit)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card stagger-2">
+                    <h2>Privacy Topology</h2>
+                    <ul class="telemetry-list" id="config-list">
+                        <li><span class="label">Base Model</span> <span class="value" id="val-teacher">Loading...</span></li>
+                        <li><span class="label">Budget (ε)</span> <span class="value" id="val-epsilon">--</span></li>
+                        <li><span class="label">Delta (δ)</span> <span class="value" id="val-delta">--</span></li>
+                        <li><span class="label">Noise (σ)</span> <span class="value" id="val-noise">--</span></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <section class="inference-workspace glass-card stagger-3">
+                <div class="workspace-header">
+                    <h2>Local Inference Engine</h2>
+                    <span id="save-badge" class="badge hidden">Memory Synced</span>
+                </div>
+                
+                <div class="editor-container">
+                    <textarea id="prompt-input" placeholder="Initialize secure narrative buffer..."></textarea>
+                    <div class="editor-footer">
+                        <span class="char-count"><span id="char-val">0</span> bytes</span>
+                        <button id="btn-analyze" class="btn primary execute" disabled>Execute Inference</button>
+                    </div>
+                </div>
+
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                        <span class="term-title">bash - privadistill@local</span>
+                    </div>
+                    <div id="console-output" class="terminal-body">
+                        <div class="log-entry system">Initializing secure sandbox environment...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="/js/api.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

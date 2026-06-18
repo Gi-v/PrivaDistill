@@ -1,0 +1,40 @@
+name: PrivaDistill CI Pipeline
+
+# Trigger the workflow on pushes and pull requests to the main branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Pull down the repository code
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Setup the precise Python version used in our Dockerfile
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+        cache: 'pip' # Speeds up subsequent runs by caching dependencies
+
+    # 3. Install the required ML libraries and testing tools
+    - name: Install System Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        
+        # Install the main application requirements
+        pip install -r requirements.txt
+        
+        # Install testing specific libraries
+        pip install pytest httpx
+
+    # 4. Execute the unit tests
+    - name: Run API Test Suite
+      run: |
+        pytest tests/ -v
