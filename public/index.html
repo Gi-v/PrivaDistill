@@ -1,88 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrivaDistill Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrivaDistill Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
-    <div class="app-container">
-        <header class="glass-panel slide-down">
-            <div class="brand">
-                <div class="logo-shield">🔒</div>
-                <div class="brand-text">
-                    <h1>PrivaDistill</h1>
-                    <span class="version">v2.0.0-edge</span>
-                </div>
+
+  <!-- Ambient background grid -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <div class="shell">
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M14 2L4 7V14c0 5.523 4.224 10.243 10 11 5.776-.757 10-5.477 10-11V7L14 2Z" fill="var(--accent)" fill-opacity=".15" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M10 14l3 3 5-5" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <span class="brand-name">PrivaDistill</span>
+          <span class="brand-tag">v2.0.0-edge</span>
+        </div>
+      </div>
+
+      <nav class="topbar-nav" role="navigation" aria-label="Pipeline steps">
+        <a href="#pipeline" class="nav-link active">Pipeline</a>
+        <a href="#inference" class="nav-link">Inference</a>
+        <a href="#topology" class="nav-link">Topology</a>
+      </nav>
+
+      <div class="sys-status" role="status" aria-live="polite">
+        <span id="status-pulse" class="pulse-dot offline" aria-hidden="true"></span>
+        <span id="status-text">Offline</span>
+      </div>
+    </header>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="workspace">
+
+      <!-- LEFT RAIL -->
+      <aside class="rail" aria-label="Controls">
+
+        <!-- Pipeline card -->
+        <section class="card" id="pipeline">
+          <header class="card-head">
+            <span class="card-eyebrow">01</span>
+            <h2 class="card-title">Pipeline</h2>
+          </header>
+
+          <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <p id="progress-label" class="progress-label">&nbsp;</p>
+
+          <div class="btn-stack">
+            <button id="btn-train" class="btn btn--primary" data-action="/train" aria-label="Start DP Distillation">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1v7m0 0L5 5m3 3 3-3M2 11h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              DP Distillation
+            </button>
+            <button id="btn-export" class="btn btn--secondary" data-action="/export" aria-label="Export to ONNX">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="9" width="12" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 4.5h5M8 1v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Export ONNX
+            </button>
+            <button id="btn-quantize" class="btn btn--ghost" data-action="/quantize" aria-label="4-bit quantization">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h3l2-5 2 10 2-5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Quantize 4-bit
+            </button>
+          </div>
+        </section>
+
+        <!-- Topology card -->
+        <section class="card" id="topology">
+          <header class="card-head">
+            <span class="card-eyebrow">02</span>
+            <h2 class="card-title">Privacy Topology</h2>
+          </header>
+          <dl class="topo-list">
+            <div class="topo-row">
+              <dt>Base model</dt>
+              <dd id="val-teacher" class="mono">—</dd>
             </div>
-            <div class="status-indicator">
-                <div id="status-pulse" class="pulse-dot offline"></div>
-                <span id="status-text">System Offline</span>
+            <div class="topo-row">
+              <dt>Budget (ε)</dt>
+              <dd id="val-epsilon" class="mono accent">—</dd>
             </div>
+            <div class="topo-row">
+              <dt>Delta (δ)</dt>
+              <dd id="val-delta" class="mono">—</dd>
+            </div>
+            <div class="topo-row">
+              <dt>Noise (σ)</dt>
+              <dd id="val-noise" class="mono">—</dd>
+            </div>
+          </dl>
+        </section>
+
+      </aside>
+
+      <!-- MAIN PANEL -->
+      <section class="panel" id="inference">
+        <header class="panel-head">
+          <div>
+            <span class="card-eyebrow">03</span>
+            <h2 class="panel-title">Local Inference Engine</h2>
+          </div>
+          <span id="save-badge" class="badge hidden" role="status" aria-live="polite">Memory synced</span>
         </header>
 
-        <main class="dashboard-grid fade-in">
-            
-            <aside class="control-panel">
-                <div class="glass-card stagger-1">
-                    <h2>Pipeline Orchestration</h2>
-                    <div class="button-group vertical">
-                        <button id="btn-train" class="btn primary glow" data-action="/train">
-                            <span class="btn-icon">⚡</span> 1. DP Distillation
-                        </button>
-                        <button id="btn-export" class="btn secondary" data-action="/export">
-                            <span class="btn-icon">📦</span> 2. Export ONNX
-                        </button>
-                        <button id="btn-quantize" class="btn secondary outline" data-action="/quantize">
-                            <span class="btn-icon">🗜️</span> 3. Quantize (4-bit)
-                        </button>
-                    </div>
-                </div>
+        <!-- Prompt editor -->
+        <div class="editor-wrap">
+          <label class="sr-only" for="prompt-input">Prompt</label>
+          <textarea
+            id="prompt-input"
+            placeholder="Enter prompt text to run through the private model…"
+            spellcheck="false"
+            rows="6"
+          ></textarea>
+          <footer class="editor-foot">
+            <span class="char-count"><span id="char-val">0</span> chars</span>
+            <button id="btn-analyze" class="btn btn--run" disabled aria-label="Execute inference">
+              Execute Inference
+            </button>
+          </footer>
+        </div>
 
-                <div class="glass-card stagger-2">
-                    <h2>Privacy Topology</h2>
-                    <ul class="telemetry-list" id="config-list">
-                        <li><span class="label">Base Model</span> <span class="value" id="val-teacher">Loading...</span></li>
-                        <li><span class="label">Budget (ε)</span> <span class="value" id="val-epsilon">--</span></li>
-                        <li><span class="label">Delta (δ)</span> <span class="value" id="val-delta">--</span></li>
-                        <li><span class="label">Noise (σ)</span> <span class="value" id="val-noise">--</span></li>
-                    </ul>
-                </div>
-            </aside>
+        <!-- Inference result -->
+        <div id="inference-result" class="result-card hidden" role="region" aria-label="Inference result" aria-live="polite">
+          <header class="result-head">
+            <span class="result-label">Generated output</span>
+            <span id="result-ms" class="result-ms mono">—</span>
+          </header>
+          <p id="result-text" class="result-body"></p>
+        </div>
 
-            <section class="inference-workspace glass-card stagger-3">
-                <div class="workspace-header">
-                    <h2>Local Inference Engine</h2>
-                    <span id="save-badge" class="badge hidden">Memory Synced</span>
-                </div>
-                
-                <div class="editor-container">
-                    <textarea id="prompt-input" placeholder="Initialize secure narrative buffer..."></textarea>
-                    <div class="editor-footer">
-                        <span class="char-count"><span id="char-val">0</span> bytes</span>
-                        <button id="btn-analyze" class="btn primary execute" disabled>Execute Inference</button>
-                    </div>
-                </div>
+        <!-- Terminal -->
+        <div class="terminal" role="log" aria-label="System log" aria-live="polite">
+          <div class="terminal-chrome" aria-hidden="true">
+            <span class="chrome-dot"></span>
+            <span class="chrome-dot"></span>
+            <span class="chrome-dot"></span>
+            <span class="chrome-label">privadistill@local ~ bash</span>
+          </div>
+          <div id="console-output" class="terminal-body">
+            <div class="log-entry system">Initializing secure sandbox environment…</div>
+          </div>
+        </div>
+      </section>
 
-                <div class="terminal-container">
-                    <div class="terminal-header">
-                        <span class="dot red"></span>
-                        <span class="dot yellow"></span>
-                        <span class="dot green"></span>
-                        <span class="term-title">bash - privadistill@local</span>
-                    </div>
-                    <div id="console-output" class="terminal-body">
-                        <div class="log-entry system">Initializing secure sandbox environment...</div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-    
-    <script src="/js/api.js"></script>
-    <script src="/js/ui.js"></script>
-    <script src="/js/app.js"></script>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
