@@ -2,8 +2,8 @@ FROM python:3.10-slim AS builder
 WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --user --timeout 600 torch==2.5.1+cpu --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --user --timeout 600 -r requirements.txt
 
 FROM python:3.10-slim AS runtime
 WORKDIR /app
