@@ -3,161 +3,503 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PrivaDistill Engine</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <title>PrivaDistill — Privacy-Preserving Model Distillation</title>
+  <meta name="description" content="Run differentially-private model distillation, export to ONNX, and run local inference — entirely on your machine." />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
 
-  <!-- Ambient background grid -->
-  <div class="bg-grid" aria-hidden="true"></div>
-  <div class="bg-glow" aria-hidden="true"></div>
+<div class="app-shell">
 
-  <div class="shell">
+  <!-- ═══════════════════ TOP BAR ═══════════════════ -->
+  <header class="topbar">
+    <a class="topbar-brand" href="#" onclick="navigate('pipeline'); return false;" aria-label="PrivaDistill home">
+      <div class="brand-logo" aria-hidden="true">PD</div>
+      <span class="brand-wordmark">PrivaDistill</span>
+      <span class="brand-badge">v2.0.0-edge</span>
+    </a>
 
-    <!-- ═══ HEADER ═══ -->
-    <header class="topbar">
-      <div class="brand">
-        <svg class="brand-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M14 2L4 7V14c0 5.523 4.224 10.243 10 11 5.776-.757 10-5.477 10-11V7L14 2Z" fill="var(--accent)" fill-opacity=".15" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M10 14l3 3 5-5" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+    <nav class="topbar-nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-tab active" onclick="navigate('pipeline')" data-page="pipeline">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 3h12M2 8h8M2 13h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Pipeline
+      </button>
+      <button class="nav-tab" onclick="navigate('inference')" data-page="inference">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8l4 4 6-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Inference
+      </button>
+      <button class="nav-tab" onclick="navigate('topology')" data-page="topology">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Topology
+      </button>
+    </nav>
+
+    <div class="topbar-right">
+      <div class="status-chip" id="status-chip" role="status" aria-live="polite">
+        <span class="pulse" id="status-pulse"></span>
+        <span id="status-text">Connecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ PAGES ═══════════════════ -->
+  <main class="page-wrapper">
+
+    <!-- ────────────────── PAGE: PIPELINE ────────────────── -->
+    <div class="page active" id="page-pipeline">
+
+      <!-- Onboarding hero (always visible, collapses after first run) -->
+      <div class="welcome-hero" id="welcome-hero">
+        <h1 class="welcome-title">Privacy-preserving AI, in 3 steps</h1>
+        <p class="welcome-sub">PrivaDistill trains a smaller, private student model using differential privacy — your data never leaves this machine. Follow the steps below to train, export, and run inference.</p>
+        <div class="welcome-steps">
+          <div class="welcome-step"><span class="welcome-step-n">1</span>Run DP Distillation to train the private model</div>
+          <div class="welcome-step"><span class="welcome-step-n">2</span>Export to ONNX for portable inference</div>
+          <div class="welcome-step"><span class="welcome-step-n">3</span>Go to Inference and test your model</div>
+        </div>
+      </div>
+
+      <div class="page-header">
+        <div class="page-eyebrow">Step-by-step</div>
+        <h2 class="page-title">Training Pipeline</h2>
+        <p class="page-desc">Run each step in order. Training is required before exporting; exporting is required before inference.</p>
+      </div>
+
+      <div class="pipeline-layout">
+
+        <!-- Left: step list -->
+        <div class="step-list" role="list">
+
+          <div class="step-item active" role="listitem" id="step-1" onclick="selectStep(1)" tabindex="0" aria-label="Step 1: DP Distillation">
+            <div class="step-num" aria-hidden="true">1</div>
+            <div class="step-body">
+              <div class="step-title">DP Distillation</div>
+              <div class="step-desc">Train a student model with differential privacy guarantees.</div>
+            </div>
+            <span class="step-badge required" aria-label="Required">Required</span>
+          </div>
+
+          <div class="step-item" role="listitem" id="step-2" onclick="selectStep(2)" tabindex="0" aria-label="Step 2: Export ONNX">
+            <div class="step-num" aria-hidden="true">2</div>
+            <div class="step-body">
+              <div class="step-title">Export to ONNX</div>
+              <div class="step-desc">Convert the trained checkpoint to a portable ONNX model.</div>
+            </div>
+            <span class="step-badge required">Required</span>
+          </div>
+
+          <div class="step-item" role="listitem" id="step-3" onclick="selectStep(3)" tabindex="0" aria-label="Step 3: Quantize 4-bit">
+            <div class="step-num" aria-hidden="true">3</div>
+            <div class="step-body">
+              <div class="step-title">Quantize 4-bit</div>
+              <div class="step-desc">Compress the model for faster inference (CUDA GPU required).</div>
+            </div>
+            <span class="step-badge optional">Optional</span>
+          </div>
+
+        </div>
+
+        <!-- Right: action panel -->
+        <div class="pipeline-action">
+
+          <div class="card" id="action-panel">
+
+            <!-- Step 1 content -->
+            <div id="step-content-1">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-title">DP Distillation</div>
+                  <div class="card-subtitle">Trains a privacy-preserving student model using Gaussian noise injection</div>
+                </div>
+                <span class="chip chip-indigo">Step 1 of 3</span>
+              </div>
+
+              <div class="banner banner-info mt-sm" style="margin-bottom:1.25rem;">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a.75.75 0 110 1.5A.75.75 0 018 4zm0 3a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 7z"/></svg>
+                <div>
+                  <div class="banner-title">What this does</div>
+                  Trains a smaller "student" model on your data. Gaussian noise is added to gradients to enforce differential privacy — the model learns useful patterns without memorising individual records.
+                </div>
+              </div>
+
+              <div class="config-grid" id="train-config-grid">
+                <div class="config-field">
+                  <span class="config-label">Base model</span>
+                  <span class="config-value" id="cfg-teacher">Loading…</span>
+                </div>
+                <div class="config-field">
+                  <span class="config-label">Privacy budget (ε)</span>
+                  <span class="config-value highlight" id="cfg-epsilon">—</span>
+                </div>
+                <div class="config-field">
+                  <span class="config-label">Delta (δ)</span>
+                  <span class="config-value" id="cfg-delta">—</span>
+                </div>
+                <div class="config-field">
+                  <span class="config-label">Noise multiplier (σ)</span>
+                  <span class="config-value" id="cfg-noise">—</span>
+                </div>
+              </div>
+
+              <div class="progress-wrap hidden" id="train-progress-wrap">
+                <div class="progress-info">
+                  <span class="progress-info-label" id="progress-label-text">Training…</span>
+                  <span class="progress-pct" id="progress-pct-text">0%</span>
+                </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Training progress" id="progress-bar-el">
+                  <div class="progress-fill" id="progress-fill-el"></div>
+                </div>
+                <div class="progress-msg" id="progress-msg-el">&nbsp;</div>
+              </div>
+
+              <div class="action-row">
+                <button class="btn btn-primary btn-lg" id="btn-train" onclick="runStep('/train', 'btn-train')" data-tip="Runs DP training with the config shown above">
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1v7M5 5l3 3 3-3M2 11h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Start Training
+                </button>
+                <span class="text-sm text-muted" id="train-status-msg">Not yet trained</span>
+              </div>
+            </div>
+
+            <!-- Step 2 content -->
+            <div id="step-content-2" class="hidden">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-title">Export to ONNX</div>
+                  <div class="card-subtitle">Converts the PyTorch checkpoint to a portable ONNX graph</div>
+                </div>
+                <span class="chip chip-indigo">Step 2 of 3</span>
+              </div>
+
+              <div class="banner banner-warn" style="margin-bottom:1.25rem;">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 1L1 14h14L8 1zm0 3.5l4.5 8H3.5L8 4.5zm-.75 3v2.5h1.5V7.5h-1.5zm0 3v1.5h1.5v-1.5h-1.5z"/></svg>
+                <div>
+                  <div class="banner-title">Requires training first</div>
+                  You must complete Step 1 (DP Distillation) before exporting. A PyTorch checkpoint must exist on disk.
+                </div>
+              </div>
+
+              <div class="action-row">
+                <button class="btn btn-primary btn-lg" id="btn-export" onclick="runStep('/export', 'btn-export')" data-tip="Exports trained model to ONNX format">
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="9" width="12" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 4.5h5M8 1v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Export ONNX
+                </button>
+                <span class="text-sm text-muted" id="export-status-msg">Not yet exported</span>
+              </div>
+            </div>
+
+            <!-- Step 3 content -->
+            <div id="step-content-3" class="hidden">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <div class="card-title">Quantize 4-bit</div>
+                  <div class="card-subtitle">Compresses model weights for faster, leaner inference</div>
+                </div>
+                <span class="chip chip-gray">Optional · CUDA only</span>
+              </div>
+
+              <div class="banner banner-info" style="margin-bottom:1.25rem;">
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a.75.75 0 110 1.5A.75.75 0 018 4zm0 3a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 018 7z"/></svg>
+                <div>
+                  <div class="banner-title">GPU required</div>
+                  4-bit quantization requires a CUDA-capable NVIDIA GPU. If none is detected, this step is skipped automatically — that's expected and not an error.
+                </div>
+              </div>
+
+              <div class="action-row">
+                <button class="btn btn-primary btn-lg" id="btn-quantize" onclick="runStep('/quantize', 'btn-quantize')" data-tip="Requires CUDA GPU — skipped automatically otherwise">
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h3l2-5 2 10 2-5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Run Quantization
+                </button>
+                <span class="text-sm text-muted" id="quantize-status-msg">Optional — not run</span>
+              </div>
+            </div>
+
+          </div><!-- /card -->
+
+          <!-- Terminal -->
+          <div class="terminal" role="log" aria-label="System log" aria-live="polite">
+            <div class="terminal-bar" aria-hidden="true">
+              <span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>
+              <span class="t-label">privadistill@local ~ system log</span>
+            </div>
+            <div class="terminal-body" id="log-pipeline">
+              <span class="log muted">Waiting for backend…</span>
+            </div>
+          </div>
+
+        </div><!-- /pipeline-action -->
+      </div><!-- /pipeline-layout -->
+    </div><!-- /page-pipeline -->
+
+
+    <!-- ────────────────── PAGE: INFERENCE ────────────────── -->
+    <div class="page" id="page-inference">
+
+      <div class="page-header">
+        <div class="page-eyebrow">Local inference</div>
+        <h2 class="page-title">Run the Private Model</h2>
+        <p class="page-desc">Type any prompt and run it through your locally-exported ONNX model. Nothing leaves your machine.</p>
+      </div>
+
+      <!-- Prerequisite banner — shown until model is ready -->
+      <div id="inference-prereq-banner" class="banner banner-warn" style="margin-bottom:1.25rem;">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 1L1 14h14L8 1zm0 3.5l4.5 8H3.5L8 4.5zm-.75 3v2.5h1.5V7.5h-1.5zm0 3v1.5h1.5v-1.5h-1.5z"/></svg>
         <div>
-          <span class="brand-name">PrivaDistill</span>
-          <span class="brand-tag">v2.0.0-edge</span>
+          <div class="banner-title">Train &amp; export first</div>
+          The ONNX model hasn't been found yet. Go to <strong>Pipeline</strong> and complete steps 1 and 2 before running inference.
+          <button class="btn btn-sm btn-outline" style="margin-top:.5rem;" onclick="navigate('pipeline')">Go to Pipeline →</button>
         </div>
       </div>
 
-      <nav class="topbar-nav" role="navigation" aria-label="Pipeline steps">
-        <a href="#pipeline" class="nav-link active">Pipeline</a>
-        <a href="#inference" class="nav-link">Inference</a>
-        <a href="#topology" class="nav-link">Topology</a>
-      </nav>
+      <div class="inference-layout">
 
-      <div class="sys-status" role="status" aria-live="polite">
-        <span id="status-pulse" class="pulse-dot offline" aria-hidden="true"></span>
-        <span id="status-text">Offline</span>
+        <!-- Editor -->
+        <div class="flex flex-col" style="gap:1rem;">
+          <div class="card">
+            <label class="editor-label" for="prompt-input">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Your prompt
+            </label>
+            <div class="textarea-wrap">
+              <textarea
+                class="prompt-textarea"
+                id="prompt-input"
+                placeholder="Enter text to run through the private model… e.g. 'Summarise the following patient note:'"
+                spellcheck="false"
+                rows="7"
+                aria-label="Prompt input"
+                maxlength="4096"
+              ></textarea>
+              <div class="textarea-footer">
+                <span class="char-count" id="char-count">0 / 4096</span>
+                <button class="btn btn-primary" id="btn-analyze" onclick="runInference()" disabled aria-label="Execute inference">
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8l5-5 5 5M8 3v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Execute Inference
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Result -->
+          <div class="card hidden" id="result-card">
+            <div class="result-area">
+              <div class="result-header">
+                <span class="result-title">Model output</span>
+                <div class="result-meta">
+                  <span class="meta-pill" id="result-ms-pill">—</span>
+                  <span class="meta-pill chip-green" id="result-status-pill">✓ Done</span>
+                </div>
+              </div>
+              <div class="result-box" id="result-output"></div>
+            </div>
+          </div>
+
+          <!-- Inference log -->
+          <div class="terminal" role="log" aria-label="Inference log" aria-live="polite">
+            <div class="terminal-bar" aria-hidden="true">
+              <span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>
+              <span class="t-label">privadistill@local ~ inference</span>
+            </div>
+            <div class="terminal-body" id="log-inference">
+              <span class="log muted">No inference requests yet.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="inference-sidebar">
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1rem;">Session Stats</div>
+            <div class="stat-grid">
+              <div class="stat-box">
+                <span class="stat-box-value" id="stat-runs">0</span>
+                <span class="stat-box-label">Runs</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-box-value" id="stat-avg-ms">—</span>
+                <span class="stat-box-label">Avg ms</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-box-value" id="stat-tokens">0</span>
+                <span class="stat-box-label">Chars sent</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-box-value" id="stat-last-ms">—</span>
+                <span class="stat-box-label">Last ms</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:.75rem;">Prompt History</div>
+            <div class="history-list" id="history-list">
+              <div class="history-empty">No prompts yet. Run your first inference above.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title" style="margin-bottom:.75rem;">Quick Prompts</div>
+            <div class="flex flex-col" style="gap:.375rem;">
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;" onclick="setPrompt('Summarise this clinical note in one sentence:')">Summarise a note</button>
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;" onclick="setPrompt('Extract the key entities from the following text:')">Extract entities</button>
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;" onclick="setPrompt('Classify the sentiment of this message:')">Classify sentiment</button>
+              <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;" onclick="setPrompt('Translate the following to plain English:')">Plain English</button>
+            </div>
+          </div>
+
+        </div>
       </div>
-    </header>
+    </div><!-- /page-inference -->
 
-    <!-- ═══ MAIN ═══ -->
-    <main class="workspace">
 
-      <!-- LEFT RAIL -->
-      <aside class="rail" aria-label="Controls">
+    <!-- ────────────────── PAGE: TOPOLOGY ────────────────── -->
+    <div class="page" id="page-topology">
 
-        <!-- Pipeline card -->
-        <section class="card" id="pipeline">
-          <header class="card-head">
-            <span class="card-eyebrow">01</span>
-            <h2 class="card-title">Pipeline</h2>
-          </header>
+      <div class="page-header">
+        <div class="page-eyebrow">Configuration</div>
+        <h2 class="page-title">Privacy Topology</h2>
+        <p class="page-desc">Live snapshot of the differential-privacy parameters loaded from your config. These govern the privacy-utility trade-off of the trained model.</p>
+      </div>
 
-          <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-            <div id="progress-fill" class="progress-fill"></div>
+      <div class="topology-layout">
+
+        <!-- Config card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-title">Active Configuration</div>
+              <div class="card-subtitle">Loaded from <code style="font-family:var(--mono);font-size:.8em;background:var(--bg-alt);padding:.1rem .35rem;border-radius:4px;">config.py</code></div>
+            </div>
           </div>
-          <p id="progress-label" class="progress-label">&nbsp;</p>
 
-          <div class="btn-stack">
-            <button id="btn-train" class="btn btn--primary" data-action="/train" aria-label="Start DP Distillation">
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1v7m0 0L5 5m3 3 3-3M2 11h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              DP Distillation
-            </button>
-            <button id="btn-export" class="btn btn--secondary" data-action="/export" aria-label="Export to ONNX">
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="9" width="12" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 4.5h5M8 1v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-              Export ONNX
-            </button>
-            <button id="btn-quantize" class="btn btn--ghost" data-action="/quantize" aria-label="4-bit quantization">
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h3l2-5 2 10 2-5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Quantize 4-bit
-            </button>
+          <div class="topology-row">
+            <div class="topology-key">
+              <span class="topology-key-name">Base model</span>
+              <span class="topology-key-desc">Teacher model used as knowledge source</span>
+            </div>
+            <span class="topology-val" id="topo-teacher">—</span>
           </div>
-        </section>
-
-        <!-- Topology card -->
-        <section class="card" id="topology">
-          <header class="card-head">
-            <span class="card-eyebrow">02</span>
-            <h2 class="card-title">Privacy Topology</h2>
-          </header>
-          <dl class="topo-list">
-            <div class="topo-row">
-              <dt>Base model</dt>
-              <dd id="val-teacher" class="mono">—</dd>
+          <div class="topology-row">
+            <div class="topology-key">
+              <span class="topology-key-name">Privacy budget (ε)</span>
+              <span class="topology-key-desc">Higher = less private but more accurate</span>
             </div>
-            <div class="topo-row">
-              <dt>Budget (ε)</dt>
-              <dd id="val-epsilon" class="mono accent">—</dd>
-            </div>
-            <div class="topo-row">
-              <dt>Delta (δ)</dt>
-              <dd id="val-delta" class="mono">—</dd>
-            </div>
-            <div class="topo-row">
-              <dt>Noise (σ)</dt>
-              <dd id="val-noise" class="mono">—</dd>
-            </div>
-          </dl>
-        </section>
-
-      </aside>
-
-      <!-- MAIN PANEL -->
-      <section class="panel" id="inference">
-        <header class="panel-head">
-          <div>
-            <span class="card-eyebrow">03</span>
-            <h2 class="panel-title">Local Inference Engine</h2>
+            <span class="topology-val accent" id="topo-epsilon">—</span>
           </div>
-          <span id="save-badge" class="badge hidden" role="status" aria-live="polite">Memory synced</span>
-        </header>
+          <div class="topology-row">
+            <div class="topology-key">
+              <span class="topology-key-name">Delta (δ)</span>
+              <span class="topology-key-desc">Probability that ε-guarantee is violated</span>
+            </div>
+            <span class="topology-val" id="topo-delta">—</span>
+          </div>
+          <div class="topology-row">
+            <div class="topology-key">
+              <span class="topology-key-name">Noise multiplier (σ)</span>
+              <span class="topology-key-desc">Scales the Gaussian noise added to gradients</span>
+            </div>
+            <span class="topology-val" id="topo-noise">—</span>
+          </div>
+          <div class="topology-row">
+            <div class="topology-key">
+              <span class="topology-key-name">Max gradient norm</span>
+              <span class="topology-key-desc">L2 clip bound for per-sample gradients</span>
+            </div>
+            <span class="topology-val" id="topo-clip">—</span>
+          </div>
+          <div class="topology-row">
+            <div class="topology-key">
+              <span class="topology-key-name">Batch size</span>
+              <span class="topology-key-desc">Samples per gradient step</span>
+            </div>
+            <span class="topology-val" id="topo-batch">—</span>
+          </div>
 
-        <!-- Prompt editor -->
-        <div class="editor-wrap">
-          <label class="sr-only" for="prompt-input">Prompt</label>
-          <textarea
-            id="prompt-input"
-            placeholder="Enter prompt text to run through the private model…"
-            spellcheck="false"
-            rows="6"
-          ></textarea>
-          <footer class="editor-foot">
-            <span class="char-count"><span id="char-val">0</span> chars</span>
-            <button id="btn-analyze" class="btn btn--run" disabled aria-label="Execute inference">
-              Execute Inference
-            </button>
-          </footer>
+          <!-- Privacy meter -->
+          <div class="privacy-meter">
+            <div class="meter-label">
+              <span>Privacy strength</span>
+              <strong id="meter-rating">—</strong>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill strong" id="meter-fill"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- Inference result -->
-        <div id="inference-result" class="result-card hidden" role="region" aria-label="Inference result" aria-live="polite">
-          <header class="result-head">
-            <span class="result-label">Generated output</span>
-            <span id="result-ms" class="result-ms mono">—</span>
-          </header>
-          <p id="result-text" class="result-body"></p>
-        </div>
+        <!-- Right column -->
+        <div class="flex flex-col" style="gap:1.25rem;">
 
-        <!-- Terminal -->
-        <div class="terminal" role="log" aria-label="System log" aria-live="polite">
-          <div class="terminal-chrome" aria-hidden="true">
-            <span class="chrome-dot"></span>
-            <span class="chrome-dot"></span>
-            <span class="chrome-dot"></span>
-            <span class="chrome-label">privadistill@local ~ bash</span>
+          <!-- Architecture diagram -->
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1rem;">Training Architecture</div>
+
+            <div class="arch-diagram">
+              <div class="arch-node">
+                <div class="arch-node-icon teacher">🎓</div>
+                <div class="arch-node-body">
+                  <div class="arch-node-name">Teacher Model</div>
+                  <div class="arch-node-sub" id="arch-teacher-name">GPT-2 Medium — frozen, generates soft labels</div>
+                </div>
+                <span class="chip chip-amber">Frozen</span>
+              </div>
+              <div class="arch-arrow">↓ soft logits</div>
+              <div class="arch-node">
+                <div class="arch-node-icon noise">🔒</div>
+                <div class="arch-node-body">
+                  <div class="arch-node-name">DP-SGD Noise Layer</div>
+                  <div class="arch-node-sub" id="arch-noise-desc">Gaussian noise σ=— injected per-gradient</div>
+                </div>
+                <span class="chip chip-indigo">Privacy</span>
+              </div>
+              <div class="arch-arrow">↓ noisy gradients</div>
+              <div class="arch-node">
+                <div class="arch-node-icon student">🧠</div>
+                <div class="arch-node-body">
+                  <div class="arch-node-name">Student Model</div>
+                  <div class="arch-node-sub">Smaller trainable model — learns from teacher</div>
+                </div>
+                <span class="chip chip-green">Trainable</span>
+              </div>
+              <div class="arch-arrow">↓ export</div>
+              <div class="arch-node">
+                <div class="arch-node-icon onnx">📦</div>
+                <div class="arch-node-body">
+                  <div class="arch-node-name">ONNX Runtime</div>
+                  <div class="arch-node-sub">Portable inference — no PyTorch needed at runtime</div>
+                </div>
+                <span class="chip chip-gray">Output</span>
+              </div>
+            </div>
           </div>
-          <div id="console-output" class="terminal-body">
-            <div class="log-entry system">Initializing secure sandbox environment…</div>
+
+          <!-- DP explainer -->
+          <div class="card">
+            <div class="card-title" style="margin-bottom:.75rem;">What is ε-differential privacy?</div>
+            <p class="text-sm text-muted" style="line-height:1.7;margin-bottom:.75rem;">
+              A model satisfies <strong>(ε, δ)-differential privacy</strong> if adding or removing any single training record changes the model's output distribution by at most a factor of <code style="font-family:var(--mono);font-size:.85em;">e<sup>ε</sup></code>.
+            </p>
+            <p class="text-sm text-muted" style="line-height:1.7;margin-bottom:.75rem;">
+              Lower ε = stronger privacy guarantee. PrivaDistill enforces this by clipping per-sample gradients and injecting calibrated Gaussian noise during training (DP-SGD).
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-top:.75rem;">
+              <div class="stat-box"><span class="stat-box-value" style="color:var(--green);">ε &lt; 1</span><span class="stat-box-label">Strong</span></div>
+              <div class="stat-box"><span class="stat-box-value" style="color:var(--amber);">1 – 10</span><span class="stat-box-label">Moderate</span></div>
+              <div class="stat-box"><span class="stat-box-value" style="color:var(--red);">&gt; 10</span><span class="stat-box-label">Weak</span></div>
+            </div>
           </div>
+
         </div>
-      </section>
+      </div>
+    </div><!-- /page-topology -->
 
-    </main>
-  </div>
+  </main><!-- /page-wrapper -->
+</div><!-- /app-shell -->
 
-  <script src="/js/api.js"></script>
-  <script src="/js/ui.js"></script>
-  <script src="/js/app.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/app.js"></script>
 </body>
 </html>
