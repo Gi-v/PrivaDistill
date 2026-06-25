@@ -10,7 +10,7 @@
 :root {
   /* Colours */
   --white:         #ffffff;
-  --bg:            #ffffff;
+  --bg:            #f8fafc;
   --bg-alt:        #f1f5f9;
   --surface:       #ffffff;
   --surface-hover: #f8fafc;
@@ -63,11 +63,6 @@
   --fast:    .12s;
   --mid:     .2s;
   --slow:    .4s;
-}
-
-body {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
 }
 
 /* ── Reset ── */
